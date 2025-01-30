@@ -5,7 +5,7 @@ import {
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
-  async handleEvent(evt: RepoEvent) {
+  async handleEvent(evt: RepoEvent, ciqueersky) {
     if (!isCommit(evt)) return
 
     const ops = await getOpsByType(evt)
@@ -20,14 +20,26 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     const postsToDelete = ops.posts.deletes.map((del) => del.uri)
     const postsToCreate = ops.posts.creates
       .filter((create) => {
-        // only alf-related posts
-        return create.record.text.toLowerCase().includes('alf')
+
+        let isCiQueerskyAuthor = ciqueersky.has(create.author)
+        
+        // Filter for posts that include our accepted hashtags
+        let hashtags: any[] = []
+        create?.record?.text?.toLowerCase()
+          ?.match(/#[^\s#\.\;]*/gmi)
+          ?.map((hashtag) => {
+            hashtags.push(hashtag)
+          })
+
+        return isCiQueerskyAuthor || hashtags.includes('#CIQueer')
       })
       .map((create) => {
-        // map alf-related posts to a db row
+        // Create CIQueersky posts in db
         return {
           uri: create.uri,
           cid: create.cid,
+          replyParent: create.record?.reply?.parent.uri ?? null,
+          replyRoot: create.record?.reply?.root.uri ?? null,
           indexedAt: new Date().toISOString(),
         }
       })

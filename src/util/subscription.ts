@@ -12,6 +12,20 @@ import {
   isCommit,
 } from '../lexicon/types/com/atproto/sync/subscribeRepos'
 import { Database } from '../db'
+import { DID_ADDITIONS, DID_REMOVALS } from '../membership'
+import dotenv from 'dotenv'
+
+function parseReplies(threadPost) {
+  let identifiers: any[] = [];
+  if (threadPost.replies) {
+    identifiers = [...new Set(threadPost.replies
+      .map((reply) => {
+        return parseReplies(reply)
+      }))]
+  }
+  identifiers.push(threadPost.post.author.did)
+  return identifiers.flat()
+}
 
 export abstract class FirehoseSubscriptionBase {
   public sub: Subscription<RepoEvent>
@@ -34,10 +48,31 @@ export abstract class FirehoseSubscriptionBase {
     })
   }
 
-  abstract handleEvent(evt: RepoEvent): Promise<void>
+  abstract handleEvent(evt: RepoEvent, ciqueersky): Promise<void>
 
   async run(subscriptionReconnectDelay: number) {
+    dotenv.config()
+
+    const handle = process.env.IDENTIFIER ?? ''
+    const password = process.env.PASSWORD ?? ''
+    const uri = process.env.CIQUEERSKYTHREAD ?? ''
+  
     try {
+      const agent = new AtpAgent({ service: 'https://bsky.social' })
+      await agent.login({ identifier: handle, password })
+
+      const ciqueerskyThread = await agent.api.app.bsky.feed.getPostThread({uri})
+      const ciqueersky = new Set(parseReplies(ciqueerskyThread.data.thread))
+
+      // TO DO: Maybe replace with an API
+      for (let add of DID_ADDITIONS) {
+        ciqueersky.add(add)
+      }
+      for (let rm of DID_REMOVALS) {
+        ciqueersky.delete(rm)
+      }
+
+      console.log(`👨🏿‍💻 ${ciqueersky.size} individuals in the #CIQueersky skyline!`)
       for await (const evt of this.sub) {
         this.handleEvent(evt).catch((err) => {
           console.error('repo subscription could not handle message', err)
