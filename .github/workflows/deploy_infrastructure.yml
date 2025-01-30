@@ -28,6 +28,8 @@ jobs:
 
       - name: Install dependencies
         run: npm ci
+        working-directory: cdk
 
       - name: Bootstrap CDK
         run: npx cdk bootstrap --qualifier ciqueer
+        working-directory: cdk
