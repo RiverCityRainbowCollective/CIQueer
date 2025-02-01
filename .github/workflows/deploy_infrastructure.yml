@@ -42,7 +42,7 @@ jobs:
         working-directory: cdk
       
       - name: Deploy CDK app
-        run: npx cdk deploy --no-previous-parameters --qualifier ciqueer --require-approval never
+        run: npx cdk deploy --no-previous-parameters --require-approval never
         working-directory: cdk
 
 
