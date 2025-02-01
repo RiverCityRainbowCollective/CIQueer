@@ -32,4 +32,10 @@ jobs:
 
       # - name: Bootstrap CDK
       #   run: npx cdk bootstrap --qualifier ciqueer
-      #   working-directory: cdk
+      #   working-directory: 
+      
+      - name: Bootstrap CDK
+        run: npx cdk deploy --qualifier ciqueer
+        working-directory: cdk
+
+
