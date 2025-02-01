@@ -2,6 +2,7 @@ import {
   OutputSchema as RepoEvent,
   isCommit,
 } from './lexicon/types/com/atproto/sync/subscribeRepos'
+import { DID_ADDITIONS, DID_REMOVALS } from './membership'
 import { FirehoseSubscriptionBase, getOpsByType } from './util/subscription'
 
 export class FirehoseSubscription extends FirehoseSubscriptionBase {
@@ -20,9 +21,6 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
     const postsToDelete = ops.posts.deletes.map((del) => del.uri)
     const postsToCreate = ops.posts.creates
       .filter((create) => {
-
-        let isCiQueerskyAuthor = ciqueersky.has(create.author)
-        
         // Filter for posts that include our accepted hashtags
         let hashtags: any[] = []
         create?.record?.text?.toLowerCase()
@@ -30,6 +28,21 @@ export class FirehoseSubscription extends FirehoseSubscriptionBase {
           ?.map((hashtag) => {
             hashtags.push(hashtag)
           })
+
+        // Process new signups for our feed.
+        if (hashtags.includes('#JoinCIQueer') && !DID_REMOVALS.includes(create.author) && !DID_ADDITIONS.includes(create.author)) {
+          DID_ADDITIONS.push(create.author)
+        }
+
+        // Process removals from our feed
+        if (hashtags.includes('#LeaveCIQueer')) {
+          const index = DID_ADDITIONS.indexOf(create.author, 0)
+          if (index > -1) {
+            DID_ADDITIONS.splice(index, 1)
+          }
+        }
+
+        let isCiQueerskyAuthor = ciqueersky.has(create.author)
 
         return isCiQueerskyAuthor || hashtags.includes('#CIQueer')
       })
