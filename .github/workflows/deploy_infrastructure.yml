@@ -8,9 +8,12 @@ permissions:
   contents: read     # Required to checkout code
 
 jobs:
-  bootstrap:
+  deploy-cdk:
     runs-on: ubuntu-latest
-    
+    env:
+      DATABASE_USER: ${{ secrets.DATABASE_USER }}
+      DATABASE_PASSWORD: ${{ secrets.DATABASE_PASSWORD }}
+      DATABASE_NAME: ${{ secrets.DATABASE_NAME }}
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
@@ -33,6 +36,10 @@ jobs:
       # - name: Bootstrap CDK
       #   run: npx cdk bootstrap --qualifier ciqueer
       #   working-directory: 
+
+      - name: Synthesize CDK app
+        run: npx cdk synth
+        working-directory: cdk
       
       - name: Bootstrap CDK
         run: npx cdk deploy --qualifier ciqueer
