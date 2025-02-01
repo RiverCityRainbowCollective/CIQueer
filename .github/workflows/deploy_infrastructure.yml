@@ -41,8 +41,8 @@ jobs:
         run: npx cdk synth
         working-directory: cdk
       
-      - name: Bootstrap CDK
-        run: npx cdk deploy --qualifier ciqueer
+      - name: Deploy CDK app
+        run: npx cdk deploy --qualifier ciqueer --require-approval never --no-previous-parameters
         working-directory: cdk
 
 
