@@ -47,9 +47,18 @@ export class CdkStack extends cdk.Stack {
       volumeType: cdk.aws_ec2.EbsDeviceVolumeType.GP3,
     });
 
+    // Create IAM role for Session Manager
+    const role = new cdk.aws_iam.Role(this, 'EC2Role', {
+      assumedBy: new cdk.aws_iam.ServicePrincipal('ec2.amazonaws.com'),
+      managedPolicies: [
+        cdk.aws_iam.ManagedPolicy.fromAwsManagedPolicyName('AmazonSSMManagedInstanceCore'),
+      ],
+    });
+
     // Create EC2 Instance
     const instance = new cdk.aws_ec2.Instance(this, 'EC2Instance', {
       vpc,
+      role: role,
       availabilityZone: az,
       vpcSubnets: {
         subnetType: cdk.aws_ec2.SubnetType.PUBLIC,
